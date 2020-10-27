@@ -1,0 +1,3 @@
+include ':SearchPreferenceFragment'
+include ':app'
+rootProject.name = "SearchPreferenceFragmentExample"
