@@ -12,7 +12,8 @@ class MainActivity : AppCompatActivity() {
 
         val searchPreferenceFragment = SearchPreferenceFragment()
         val bundle = Bundle().apply {
-            putInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID,R.xml.preference)
+            putIntArray(SearchPreferenceFragment.PREFERENCE_XML_RESOURCE_LIST, intArrayOf(R.xml.preference))
+            putInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID, R.xml.preference)
         }
         searchPreferenceFragment.arguments = bundle
         supportFragmentManager.beginTransaction().replace(R.id.activity_main_fragment_host_frame_layout,searchPreferenceFragment).commit()
