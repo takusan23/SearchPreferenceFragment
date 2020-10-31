@@ -7,7 +7,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.preference.Preference
 import io.github.takusan23.searchpreferencefragment.DataClass.SearchPreferenceParseData
-import io.github.takusan23.searchpreferencefragment.DataClass.SearchResultData
 import org.xmlpull.v1.XmlPullParser
 
 /**
@@ -29,7 +28,9 @@ class SearchPreferenceViewModel(application: Application, private val preference
     val searchEditTextChange = MutableLiveData<String>()
 
     /** ChildPreferenceFragmentの画面を切り替えるときに使うLiveData */
-    val changePreferenceScreen = MutableLiveData<SearchResultData>()
+    val changePreferenceScreen = MutableLiveData<SearchPreferenceParseData>()
+
+    val changeFragment = MutableLiveData<String>()
 
     /** 検索したときにPreferenceCategoryが設定済みの場合に、カテゴリ名の部分につける色 */
     var categoryTextHighlightColor = "blue"
@@ -60,6 +61,7 @@ class SearchPreferenceViewModel(application: Application, private val preference
                 val title = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "title")
                 val summary = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "summary")
                 val key = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "key")
+                val fragment = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "fragment")
 
                 // PreferenceCategoryなら名前を控える。
                 if (parser.name == "PreferenceCategory" && isCategoryShow) {
@@ -81,19 +83,19 @@ class SearchPreferenceViewModel(application: Application, private val preference
                             pref.summary = summary
                             // スクロールする際に使う？
                             pref.key = key
+                            pref.fragment = fragment
                             pref.setOnPreferenceClickListener {
                                 // ChildPreferenceFragmentに置いたLiveDataへ送信
-                                changePreferenceScreen.value = SearchResultData(resId, it.key)
+                                changePreferenceScreen.value = SearchPreferenceParseData(it, resId, title, summary, categoryName, fragment)
                                 false
                             }
                         }
-                        preferenceList.value?.add(SearchPreferenceParseData(preference, resId, title, summary, categoryName))
+                        preferenceList.value?.add(SearchPreferenceParseData(preference, resId, title, summary, categoryName, fragment))
                     } else if (eventType == XmlPullParser.START_TAG) {
                         Log.e(javaClass.simpleName, "PreferenceのXML解析に失敗しました。")
                         Log.e(javaClass.simpleName, "${parser.lineNumber}行目")
                         Log.e(javaClass.simpleName, "android:title に値が入っていることを確認してください。")
                     }
-
                 }
                 eventType = parser.next()
             }
@@ -117,9 +119,11 @@ class SearchPreferenceViewModel(application: Application, private val preference
                 "${pref.preferenceSummary}\n${pref.preferenceCategory}"
             } else {
                 pref.preferenceSummary
-            } ?: return@forEach
-            val summaryHighlight = highlightText(searchText, summaryText, pref.preferenceCategory)
-            pref.preference.summary = HtmlCompat.fromHtml(summaryHighlight, HtmlCompat.FROM_HTML_MODE_COMPACT)
+            }
+            if (summaryText != null) {
+                val summaryHighlight = highlightText(searchText, summaryText, pref.preferenceCategory)
+                pref.preference.summary = HtmlCompat.fromHtml(summaryHighlight, HtmlCompat.FROM_HTML_MODE_COMPACT)
+            }
         }
         return prefList
     }

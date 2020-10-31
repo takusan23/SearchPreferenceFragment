@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <Preference
+        android:fragment="io.github.takusan23.searchpreferencefragmentexample.SubSettingFragment"
+        android:summary="てすと"
+        android:title="Fragment切り替え" />
+
     <PreferenceCategory android:title="使い方">
         <Preference
             android:summary="Fragmentをいつもどおり置きます。ただし、Fragment#setArguments()を指定する必要があります。"
@@ -12,6 +17,7 @@
             android:summary="EditTextとFragmentを置くViewをレイアウトに置いて、onViewCreatedあたりでinit関数を呼んでください。"
             android:title="SearchPreferenceFragmentを継承する場合" />
     </PreferenceCategory>
+
 
     <PreferenceCategory android:title="仕様">
         <Preference
@@ -36,6 +42,7 @@
 
     <PreferenceCategory android:title="クラス詳細">
         <Preference
+            android:key="setting_class_doc_search_preference_fragment"
             android:summary="検索できるPreferenceFragment。主役"
             android:title="SearchPreferenceFragment" />
 

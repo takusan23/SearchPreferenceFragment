@@ -17,4 +17,5 @@ data class SearchPreferenceParseData(
     val preferenceTitle: String,
     val preferenceSummary: String?,
     val preferenceCategory: String?,
+    val fragmentName: String?,
 )

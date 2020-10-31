@@ -6,6 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import androidx.activity.addCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -44,6 +46,8 @@ open class SearchPreferenceFragment : Fragment() {
 
     /** 検索の中身などを保持するViewModel */
     private lateinit var viewModel: SearchPreferenceViewModel
+
+    private var fragmentHostLayout: View? = null
 
     /** レイアウト指定 */
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -85,6 +89,8 @@ open class SearchPreferenceFragment : Fragment() {
             return
         }
 
+        this.fragmentHostLayout = fragmentHostLayout
+
         // ViewModel初期化
         viewModel = ViewModelProvider(this, SearchPreferenceViewModelFactory(requireActivity().application, preferenceXmlList)).get(SearchPreferenceViewModel::class.java)
 
@@ -106,6 +112,19 @@ open class SearchPreferenceFragment : Fragment() {
         // PreferenceのXML切り替わったらEditTextクリア
         viewModel.changePreferenceScreen.observe(viewLifecycleOwner) { result ->
             editText.setText("")
+        }
+
+        // 戻るキー押したとき
+        requireActivity().onBackPressedDispatcher.addCallback(this) {
+            childFragmentManager.popBackStack()
+        }
+
+    }
+
+    /** Fragmentを置く関数 */
+    fun setFragment(fragment: Fragment, tag: String? = null) {
+        if (fragmentHostLayout != null) {
+            childFragmentManager.beginTransaction().replace(fragmentHostLayout!!.id, fragment, tag).addToBackStack(tag).commit()
         }
     }
 

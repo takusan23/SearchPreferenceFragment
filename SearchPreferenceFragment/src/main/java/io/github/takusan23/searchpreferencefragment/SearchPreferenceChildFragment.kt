@@ -2,6 +2,7 @@ package io.github.takusan23.searchpreferencefragment
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.addCallback
 import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -21,9 +22,21 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        defaultPreferenceResId?.apply {
-            setPreferencesFromResource(this, rootKey)
+        if (defaultPreferenceResId != null) {
+            setPreferencesFromResource(defaultPreferenceResId!!, rootKey)
         }
+    }
+
+    /**
+     * Fragment切り替えに失敗するので手直し
+     * */
+    override fun onPreferenceTreeClick(preference: Preference?): Boolean {
+        if (preference?.fragment != null) {
+            val fragment = parentFragmentManager.fragmentFactory.instantiate(requireActivity().classLoader, preference.fragment)
+            (requireParentFragment() as SearchPreferenceFragment).setFragment(fragment)
+            return true
+        }
+        return false
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -31,9 +44,6 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
 
         // ViewModel取得
         val viewModel by viewModels<SearchPreferenceViewModel>({ requireParentFragment() })
-
-        // すべての設定項目配列を取得
-        val preferenceList = viewModel.preferenceList.value
 
         // SearchPreferenceFragmentにあるEditTextのLiveData
         viewModel.searchEditTextChange.observe(viewLifecycleOwner) { editText ->
@@ -55,15 +65,37 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
 
         // 検索結果Preferenceを押したときのコールバック的なLiveData
         viewModel.changePreferenceScreen.observe(viewLifecycleOwner) { result ->
-            // 設定項目消し飛ばす
-            preferenceScreen.removeAll()
-            // Preferenceを切り替える
-            addPreferencesFromResource(result.resId)
-            // 該当する項目までスクロール
-            // TODO: 2020/10/31 できてない
-            scrollToPreference(result.preferenceId)
+            // nullの時は同じFragmentに有るってことで
+            if (result.resId != defaultPreferenceResId) {
+                // PreferenceFragment設置
+                val preferenceFragment = SearchPreferenceChildFragment()
+                preferenceFragment.arguments = Bundle().apply {
+                    putInt(PREFERENCE_XML_RESOURCE_ID, result.resId)
+                }
+                (requireParentFragment() as SearchPreferenceFragment).setFragment(preferenceFragment, result.resId.toString())
+            }
         }
 
+    }
+
+    /** Preferenceをすべて見つけて配列にして返す関数 */
+    private fun getAllPreference(): ArrayList<Preference> {
+        // 設定項目を配列にしまう
+        val preferenceList = arrayListOf<Preference>().apply {
+            // 再帰的に呼び出す
+            fun getChildPreference(group: PreferenceGroup) {
+                val preferenceCount = group.preferenceCount
+                repeat(preferenceCount) { index ->
+                    val preference = group.getPreference(index)
+                    add(preference)
+                    if (preference is PreferenceGroup) {
+                        getChildPreference(preference)
+                    }
+                }
+            }
+            getChildPreference(preferenceScreen)
+        }
+        return preferenceList
     }
 
 }

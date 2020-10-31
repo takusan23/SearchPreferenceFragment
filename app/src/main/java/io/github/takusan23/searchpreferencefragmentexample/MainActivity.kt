@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val bundle = Bundle().apply {
-                putIntArray(SearchPreferenceFragment.PREFERENCE_XML_RESOURCE_LIST, intArrayOf(R.xml.preference))
+                putIntArray(SearchPreferenceFragment.PREFERENCE_XML_RESOURCE_LIST, intArrayOf(R.xml.preference, R.xml.sub_preference))
                 putInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID, R.xml.preference)
             }
             fragment.arguments = bundle
@@ -30,6 +30,6 @@ class MainActivity : AppCompatActivity() {
             true
         }
         activity_main_bottom_navigation_bar.selectedItemId = R.id.activity_main_menu_default
-
     }
+
 }
