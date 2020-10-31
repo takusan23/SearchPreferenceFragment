@@ -1,5 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:title="設定項目">
-    <Preference android:title="ライセンス"/>
-    <Preference android:title="このあぷりについて" android:icon="@drawable/ic_baseline_android_24" android:summary="takusan_23"/>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="使い方">
+        <Preference
+            android:summary="Fragmentをいつもどおり置きます。ただし、Fragment#setArguments()を指定する必要があります。"
+            android:title="SearchPreferenceFragment()" />
+        <Preference
+            android:summary="SearchPreferenceFragment.PREFERENCE_XML_RESOURCE_LIST (検索対象にするPreferenceのxmlのID配列。IntArray)\nと\nSearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID (最初に表示するPreferenceのxml。Int型)\nに値を入れておく必要があります。"
+            android:title="Fragment#setArguments()" />
+        <Preference
+            android:summary="EditTextとFragmentを置くViewをレイアウトに置いて、onViewCreatedあたりでinit関数を呼んでください。"
+            android:title="SearchPreferenceFragmentを継承する場合" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="仕様">
+        <Preference
+            android:summary="Kotlin"
+            android:title="言語" />
+
+        <Preference
+            android:summary="5 / ロリポップ"
+            android:title="最低Androidバージョン" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="検索ボックス実装">
+        <Preference
+            android:summary="検索ボックスのしたに潜るようにリストが表示されてるけど、これNestedScrollViewでFragmentを置くViewを囲って、NestedScrollViewには上方向に負のマージンを指定し、Fragmentを置くViewには上方向にパディングをつけることで実現してる。"
+            android:title="検索ボックス実装について" />
+
+        <Preference
+            android:summary="https://stackoverflow.com/questions/38563317/how-to-make-appbarlayout-background-transparent?rq=1"
+            android:title="検索ボックス実装で参考にした" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="クラス詳細">
+        <Preference
+            android:summary="検索できるPreferenceFragment。主役"
+            android:title="SearchPreferenceFragment" />
+
+        <Preference
+            android:summary="SearchPreferenceFragmentの中で利用している。"
+            android:title="SearchPreferenceChildFragment" />
+
+        <Preference
+            android:summary="SearchPreferenceFragmentのViewModel。設定項目配列などを保持している。"
+            android:title="SearchPreferenceViewModel" />
+
+        <Preference
+            android:summary="SearchPreferenceViewModelを初期化するときに使っている。ViewModelに引数を渡したいので。DI使えば楽にできるって聞いたけど理解できない"
+            android:title="SearchPreferenceViewModelFactory" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="その他">
+        <Preference
+            android:icon="@drawable/ic_baseline_android_24"
+            android:summary="takusan_23"
+            android:title="SearchPreferenceFragment" />
+    </PreferenceCategory>
 </PreferenceScreen>
