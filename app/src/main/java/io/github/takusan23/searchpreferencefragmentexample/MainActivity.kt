@@ -22,7 +22,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val bundle = Bundle().apply {
-                putIntArray(SearchPreferenceFragment.PREFERENCE_XML_RESOURCE_LIST, intArrayOf(R.xml.preference, R.xml.sub_preference))
+                val map = hashMapOf(
+                    SubSettingFragment::class.qualifiedName to R.xml.sub_preference
+                )
+                putSerializable(SearchPreferenceFragment.PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP, map)
                 putInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID, R.xml.preference)
             }
             fragment.arguments = bundle
@@ -30,6 +33,8 @@ class MainActivity : AppCompatActivity() {
             true
         }
         activity_main_bottom_navigation_bar.selectedItemId = R.id.activity_main_menu_default
+
+        println(SubSettingFragment::class.qualifiedName)
     }
 
 }

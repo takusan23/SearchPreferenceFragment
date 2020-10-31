@@ -29,6 +29,7 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
 
     /**
      * Fragment切り替えに失敗するので手直し
+     * その他にも検索結果押したときもandroid:fragment指定時はこれが使われる
      * */
     override fun onPreferenceTreeClick(preference: Preference?): Boolean {
         if (preference?.fragment != null) {
@@ -63,9 +64,10 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
             }
         }
 
+/*
         // 検索結果Preferenceを押したときのコールバック的なLiveData
         viewModel.changePreferenceScreen.observe(viewLifecycleOwner) { result ->
-            // nullの時は同じFragmentに有るってことで
+            // 違うリソースIDなら
             if (result.resId != defaultPreferenceResId) {
                 // PreferenceFragment設置
                 val preferenceFragment = SearchPreferenceChildFragment()
@@ -75,6 +77,7 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                 (requireParentFragment() as SearchPreferenceFragment).setFragment(preferenceFragment, result.resId.toString())
             }
         }
+*/
 
     }
 

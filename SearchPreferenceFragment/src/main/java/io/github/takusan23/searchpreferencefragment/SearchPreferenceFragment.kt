@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import androidx.activity.addCallback
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -17,20 +16,23 @@ import kotlinx.android.synthetic.main.fragment_search_preference_fragment.*
  * 検索可能PreferenceFragment。このFragmentに[androidx.preference.PreferenceFragmentCompat]を置く
  *
  * なお、このFragmentを置く際に、[setArguments]で以下の値をセットしておく必要があります。
- * - [SearchPreferenceFragment.PREFERENCE_XML_RESOURCE_LIST]
- *      - Int配列。
- *      - 検索対象にするXMLのリソースID
+ * - [SearchPreferenceFragment.PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP]
+ *      - String to Int のHashMap。
+ *      - Fragmentのパスをキーにして検索対象にするXMLのリソースIDのHashMap
  * - [SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID]
  *      - Int
  *      - 設定画面として最初に表示する項目。
- * 設置例：
+ *
+ * 設置例
  * ```
- * val searchPreferenceFragment = SearchPreferenceFragment()
  * val bundle = Bundle().apply {
- *     putIntArray(SearchPreferenceFragment.PREFERENCE_XML_RESOURCE_LIST, intArrayOf(R.xml.preference))
+ *     val map = hashMapOf(
+ *         SubSettingFragment::class.qualifiedName to R.xml.sub_preference
+ *     )
+ *     putSerializable(SearchPreferenceFragment.PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP, map)
  *     putInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID, R.xml.preference)
  * }
- * searchPreferenceFragment.arguments = bundle
+ * fragment.arguments = bundle
  * ```
  *
  * UIを変更したい場合はこのクラスを継承して、
@@ -40,8 +42,18 @@ import kotlinx.android.synthetic.main.fragment_search_preference_fragment.*
 open class SearchPreferenceFragment : Fragment() {
 
     companion object {
-        /** 検索対象にするXMLのID配列。Intの配列になるはず */
-        const val PREFERENCE_XML_RESOURCE_LIST = "preference_xml_resource_list"
+        /**
+         * FragmentのパスとPreferenceのリソースIDのHashMap。なお、階層をつけない場合は空っぽでいい。
+         *
+         * 例：
+         * ```
+         * val map = hashMapOf(
+         *     SubSettingFragment::class.qualifiedName to R.xml.sub_preference
+         * )
+         * putSerializable(SearchPreferenceFragment.PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP, map)
+         * ```
+         * */
+        const val PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP = "preference_xml_fragment_hash_map"
     }
 
     /** 検索の中身などを保持するViewModel */
@@ -68,14 +80,10 @@ open class SearchPreferenceFragment : Fragment() {
      * */
     fun init(savedInstanceState: Bundle?, editText: EditText?, fragmentHostLayout: View?) {
         // もらう
-        val preferenceXmlList = arguments?.getIntArray(PREFERENCE_XML_RESOURCE_LIST)
         val preferenceXmlId = arguments?.getInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID)
+        val preferenceFragmentMap = arguments?.getSerializable(PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP) as? HashMap<String?, Int>
 
         // 必須項目があるか
-        if (preferenceXmlList == null) {
-            Log.e(javaClass.simpleName, "検索対象にするXML配列が未指定です。")
-            return
-        }
         if (preferenceXmlId == null) {
             Log.e(javaClass.simpleName, "最初に表示するPreferenceのXMLのリソースIDが確認にできませんでした。")
             return
@@ -88,11 +96,15 @@ open class SearchPreferenceFragment : Fragment() {
             Log.e(javaClass.simpleName, "Fragmentを表示するViewが未指定です。")
             return
         }
+        if (preferenceFragmentMap == null) {
+            Log.e(javaClass.simpleName, "検索対象にするXML:FragmentNameのHashMapが未指定です。")
+            return
+        }
 
         this.fragmentHostLayout = fragmentHostLayout
 
         // ViewModel初期化
-        viewModel = ViewModelProvider(this, SearchPreferenceViewModelFactory(requireActivity().application, preferenceXmlList)).get(SearchPreferenceViewModel::class.java)
+        viewModel = ViewModelProvider(this, SearchPreferenceViewModelFactory(requireActivity().application, preferenceXmlId, preferenceFragmentMap)).get(SearchPreferenceViewModel::class.java)
 
         // 一回だけ（画面回転時は無視
         if (savedInstanceState == null) {
@@ -116,7 +128,11 @@ open class SearchPreferenceFragment : Fragment() {
 
         // 戻るキー押したとき
         requireActivity().onBackPressedDispatcher.addCallback(this) {
-            childFragmentManager.popBackStack()
+            if (childFragmentManager.backStackEntryCount > 0) {
+                childFragmentManager.popBackStack()
+            } else {
+                requireActivity().finish()
+            }
         }
 
     }

@@ -11,14 +11,14 @@ import org.xmlpull.v1.XmlPullParser
 
 /**
  * 検索PreferenceFragmentで利用するViewModel
- * @param preferenceXmlResList 検索で見つけてもらうPreferenceXML。サイトマップ的な役割を果たす
+ * @param preferenceXmlResId 検索で見つけてもらうPreferenceXML。サイトマップ的な役割を果たす
  * */
-class SearchPreferenceViewModel(application: Application, private val preferenceXmlResList: IntArray) : AndroidViewModel(application) {
+class SearchPreferenceViewModel(application: Application, private val preferenceXmlResId: Int, private val preferenceFragmentMap: HashMap<String?, Int>) : AndroidViewModel(application) {
 
     /** Context */
     private val context = getApplication<Application>().applicationContext
 
-    /** [preferenceXmlResList]で指定したPreferenceをパースして生成されたPreferenceが入る配列 */
+    /** [preferenceXmlResId]で指定したPreferenceをパースして生成されたPreferenceが入る配列 */
     val preferenceList = MutableLiveData<ArrayList<SearchPreferenceParseData>>(arrayListOf())
 
     /** android名前空間 */
@@ -30,8 +30,6 @@ class SearchPreferenceViewModel(application: Application, private val preference
     /** ChildPreferenceFragmentの画面を切り替えるときに使うLiveData */
     val changePreferenceScreen = MutableLiveData<SearchPreferenceParseData>()
 
-    val changeFragment = MutableLiveData<String>()
-
     /** 検索したときにPreferenceCategoryが設定済みの場合に、カテゴリ名の部分につける色 */
     var categoryTextHighlightColor = "blue"
 
@@ -42,64 +40,66 @@ class SearchPreferenceViewModel(application: Application, private val preference
 
     init {
         // 利用するXmlを解析しておく
-        parsePreferenceXML()
+        parsePreferenceXML(preferenceXmlResId, null)
+        for (mutableEntry in preferenceFragmentMap) {
+            val xmlResId = mutableEntry.value
+            val fragmentName = mutableEntry.key
+            parsePreferenceXML(xmlResId, fragmentName)
+        }
     }
 
-    private fun parsePreferenceXML() {
-        preferenceXmlResList.forEach { resId ->
+    private fun parsePreferenceXML(xmlResId: Int, fragmentName: String?) {
+        val parser = context.resources.getXml(xmlResId)
+        var eventType = parser.eventType
 
-            val parser = context.resources.getXml(resId)
-            var eventType = parser.eventType
+        // カテゴリ分けされてるかも
+        var categoryName: String? = null
 
-            // カテゴリ分けされてるかも
-            var categoryName: String? = null
+        // 終了まで繰り返す
+        while (eventType != XmlPullParser.END_DOCUMENT) {
 
-            // 終了まで繰り返す
-            while (eventType != XmlPullParser.END_DOCUMENT) {
+            // 使うもの
+            val title = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "title")
+            val summary = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "summary")
+            val key = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "key")
+            val fragmentAttr = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "fragment")
 
-                // 使うもの
-                val title = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "title")
-                val summary = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "summary")
-                val key = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "key")
-                val fragment = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "fragment")
-
-                // PreferenceCategoryなら名前を控える。
-                if (parser.name == "PreferenceCategory" && isCategoryShow) {
-                    if (eventType == XmlPullParser.START_TAG) {
-                        categoryName = title // 囲いはじめ
-                    }
-                    if (eventType == XmlPullParser.END_TAG) {
-                        categoryName = null // 終了タグ
-                    }
+            // PreferenceCategoryなら名前を控える。
+            if (parser.name == "PreferenceCategory" && isCategoryShow) {
+                if (eventType == XmlPullParser.START_TAG) {
+                    categoryName = title // 囲いはじめ
                 }
-
-                // PreferenceScreenはいらない
-                if (parser.name != null && parser.name != "PreferenceScreen" && parser.name != "PreferenceCategory") {
-
-                    // title が null 以外
-                    if (title != null) {
-                        val preference = Preference(context).also { pref ->
-                            pref.title = title
-                            pref.summary = summary
-                            // スクロールする際に使う？
-                            pref.key = key
-                            pref.fragment = fragment
-                            pref.setOnPreferenceClickListener {
-                                // ChildPreferenceFragmentに置いたLiveDataへ送信
-                                changePreferenceScreen.value = SearchPreferenceParseData(it, resId, title, summary, categoryName, fragment)
-                                false
-                            }
-                        }
-                        preferenceList.value?.add(SearchPreferenceParseData(preference, resId, title, summary, categoryName, fragment))
-                    } else if (eventType == XmlPullParser.START_TAG) {
-                        Log.e(javaClass.simpleName, "PreferenceのXML解析に失敗しました。")
-                        Log.e(javaClass.simpleName, "${parser.lineNumber}行目")
-                        Log.e(javaClass.simpleName, "android:title に値が入っていることを確認してください。")
-                    }
+                if (eventType == XmlPullParser.END_TAG) {
+                    categoryName = null // 終了タグ
                 }
-                eventType = parser.next()
             }
+
+            // PreferenceScreenはいらない
+            if (parser.name != null && parser.name != "PreferenceScreen" && parser.name != "PreferenceCategory") {
+
+                // title が null 以外
+                if (title != null) {
+                    val preference = Preference(context).also { pref ->
+                        pref.title = title
+                        pref.summary = summary
+                        pref.key = key
+                        // 属性の方を優先して登録する。なければ遷移先Fragment
+                        pref.fragment = fragmentAttr ?: fragmentName
+                        pref.setOnPreferenceClickListener {
+                            changePreferenceScreen.value = SearchPreferenceParseData(it, xmlResId, title, summary, categoryName, fragmentName)
+                            false
+                        }
+                    }
+                    preferenceList.value?.add(SearchPreferenceParseData(preference, xmlResId, title, summary, categoryName, fragmentName))
+                } else if (eventType == XmlPullParser.START_TAG) {
+                    Log.e(javaClass.simpleName, "PreferenceのXML解析に失敗しました。")
+                    Log.e(javaClass.simpleName, "${parser.lineNumber}行目")
+                    Log.e(javaClass.simpleName, "android:title に値が入っていることを確認してください。")
+                }
+            }
+            eventType = parser.next()
         }
+
     }
 
     /**
