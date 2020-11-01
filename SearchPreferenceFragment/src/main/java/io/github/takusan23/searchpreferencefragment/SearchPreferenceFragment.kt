@@ -135,10 +135,10 @@ open class SearchPreferenceFragment : Fragment() {
 
         // 戻るキー押したとき
         requireActivity().onBackPressedDispatcher.addCallback(this) {
-            if (childFragmentManager.backStackEntryCount > 0) {
-                childFragmentManager.popBackStack()
-            } else {
+            if (childFragmentManager.findFragmentById(fragmentHostLayout.id)?.tag == CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG) {
                 requireActivity().finish()
+            } else {
+                childFragmentManager.popBackStack()
             }
         }
 
