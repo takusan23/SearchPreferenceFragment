@@ -22,10 +22,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val bundle = Bundle().apply {
+                // 検索対象にするPreferenceのXMLのリソースIDとPreferenceCompatFragmentを指定する。
                 val map = hashMapOf(
                     SubSettingFragment::class.qualifiedName to R.xml.sub_preference
                 )
                 putSerializable(SearchPreferenceFragment.PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP, map)
+                // 最初に表示するFragment
                 putInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID, R.xml.preference)
             }
             fragment.arguments = bundle

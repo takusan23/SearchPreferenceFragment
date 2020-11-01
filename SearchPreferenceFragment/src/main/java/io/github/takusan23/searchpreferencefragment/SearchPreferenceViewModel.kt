@@ -1,13 +1,19 @@
 package io.github.takusan23.searchpreferencefragment
 
 import android.app.Application
+import android.graphics.Color
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Log
+import androidx.annotation.experimental.Experimental
 import androidx.core.text.HtmlCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.preference.Preference
 import io.github.takusan23.searchpreferencefragment.DataClass.SearchPreferenceParseData
 import org.xmlpull.v1.XmlPullParser
+
 
 /**
  * 検索PreferenceFragmentで利用するViewModel
@@ -33,10 +39,16 @@ class SearchPreferenceViewModel(application: Application, private val preference
     /** 検索したときにPreferenceCategoryが設定済みの場合に、カテゴリ名の部分につける色 */
     var categoryTextHighlightColor = "blue"
 
+    /** 検索で一致した部分をハイライト表示する際に使う色 */
+    @Deprecated("isSearchHighlightColorが非推奨のため")
     var searchContainsTextHighlightColor = "red"
 
     /** 検索結果の説明欄にPreferenceCategoryのandroid:titleの値を最後に付け足すか。 */
     var isCategoryShow = true
+
+    /** 検索に一致した部分をハイライト化するかどうか。現状動作が不安定なので非推奨 */
+    @Deprecated("Summaryがうまく動作しないため今の所非推奨")
+    var isSearchHighlightColor = false
 
     init {
         // 利用するXmlを解析しておく
@@ -81,7 +93,11 @@ class SearchPreferenceViewModel(application: Application, private val preference
                 if (title != null) {
                     val preference = Preference(context).also { pref ->
                         pref.title = title
-                        pref.summary = summary
+                        pref.summary = if (categoryName != null) {
+                            HtmlCompat.fromHtml("$summary<br><font color=$categoryTextHighlightColor>$categoryName</font>", HtmlCompat.FROM_HTML_MODE_COMPACT)
+                        } else {
+                            summary
+                        }
                         pref.key = key
                         // 属性の方を優先して登録する。なければ遷移先Fragment
                         pref.fragment = fragmentAttr ?: fragmentName
@@ -109,18 +125,16 @@ class SearchPreferenceViewModel(application: Application, private val preference
      * */
     fun findPreference(searchText: String): List<SearchPreferenceParseData>? {
         val prefList = preferenceList.value?.filter { preferenceData ->
-            preferenceData.preference.title?.contains(searchText) == true || preferenceData.preference.summary?.contains(searchText) == true
+            preferenceData.preferenceTitle.contains(searchText) || (preferenceData.preferenceSummary ?: "").contains(searchText)
         }
-        prefList?.forEach { pref ->
-            val titleHighlight = highlightText(searchText, pref.preference.title.toString(), null)
-            pref.preference.title = HtmlCompat.fromHtml(titleHighlight, HtmlCompat.FROM_HTML_MODE_COMPACT)
-            // 説明欄
-            val summaryText = if (pref.preferenceCategory != null) {
-                "${pref.preferenceSummary}\n${pref.preferenceCategory}"
-            } else {
-                pref.preferenceSummary
-            }
-            if (summaryText != null) {
+        if (isSearchHighlightColor) {
+            prefList?.forEach { pref ->
+                // タイトル
+                val titleHighlight = highlightText(searchText, pref.preferenceTitle, null)
+                pref.preference.title = HtmlCompat.fromHtml(titleHighlight, HtmlCompat.FROM_HTML_MODE_COMPACT)
+                // 説明欄
+                val categoryText = if (pref.preferenceCategory != null) "\n${pref.preferenceCategory}" else ""
+                val summaryText = "${pref.preferenceSummary}$categoryText"
                 val summaryHighlight = highlightText(searchText, summaryText, pref.preferenceCategory)
                 pref.preference.summary = HtmlCompat.fromHtml(summaryHighlight, HtmlCompat.FROM_HTML_MODE_COMPACT)
             }
@@ -128,9 +142,9 @@ class SearchPreferenceViewModel(application: Application, private val preference
         return prefList
     }
 
-    /** 改行コードを<br>へ置き換える関数 */
+    /** 改行コードを<br>へ置き換える関数。なんか<p>で囲まないと色が表示されない？ */
     private fun toHtml(text: String): String {
-        return text.replace("\n", "<br>")
+        return "<p>$text</p>".replace("\n", "<br>")
     }
 
     /**
@@ -143,9 +157,9 @@ class SearchPreferenceViewModel(application: Application, private val preference
         var html = toHtml(text)
         if (categoryText != null) {
             // カテゴリ名の色を変える
-            html = html.replace(categoryText, "<font color=$categoryTextHighlightColor>$categoryText</font>")
+            html = html.replace(categoryText, "<font color='$categoryTextHighlightColor'>$categoryText</font>")
         }
-        return html.replace(searchText, "<font color=$searchContainsTextHighlightColor>$searchText</font>")
+        return html.replace(searchText, "<font color='$searchContainsTextHighlightColor'>$searchText</font>")
     }
 
 }

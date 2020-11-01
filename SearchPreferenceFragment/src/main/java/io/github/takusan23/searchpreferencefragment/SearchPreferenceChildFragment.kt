@@ -7,10 +7,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceGroup
-import androidx.preference.PreferenceScreen
+import androidx.preference.*
 import androidx.recyclerview.widget.LinearLayoutManager
 
 /**
@@ -46,8 +43,9 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                 putString("scroll_title", preference.title?.toString())
             }
             (requireParentFragment() as SearchPreferenceFragment).setFragment(fragment)
+
             /**
-             * スクロールを実行する。本来は生成したFragmentでなにか処理を行う場合はクソ面倒なことになりそうだけど、
+             * スクロールを実行する。Fragmentのライフサイクルに合わせて書かないとエラーが出ちゃうから無理やり遅延させたりする必要があったりしたけど、
              * ライフサイクルライブラリのおかげでこんな書き方ができる。くっっっそ便利
              * */
             fragment.lifecycle.addObserver(object : LifecycleObserver {
@@ -72,7 +70,6 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                         }
                         // なんか遅延させると動く
                         view?.postDelayed({
-                            println("はい $pos $isAdded")
                             if (isAdded) {
                                 /**
                                  * LayoutManager経由でスクロールする。RecyclerViewにもスクロール関数が生えてるけど、なんか実装空っぽだった

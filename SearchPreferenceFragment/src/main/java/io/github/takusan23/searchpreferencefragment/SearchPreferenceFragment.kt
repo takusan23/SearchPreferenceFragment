@@ -120,13 +120,13 @@ open class SearchPreferenceFragment : Fragment() {
         }
 
         // テキストボックスの変更を監視
-        editText.addTextChangedListener { edit ->
+        editText.addTextChangedListener(afterTextChanged = { text ->
             // もし、Fragmentを切り替えてしまった場合は、最初のFragment（SearchPreferenceChildFragment）へ戻す。
             if (childFragmentManager.findFragmentById(fragmentHostLayout.id)?.tag != CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG) {
                 childFragmentManager.popBackStack(CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG, 0)
             }
-            viewModel.searchEditTextChange.value = edit.toString()
-        }
+            viewModel.searchEditTextChange.postValue(text.toString())
+        })
 
         // PreferenceのXML切り替わったらEditTextクリア
         viewModel.changePreferenceScreen.observe(viewLifecycleOwner) { result ->
