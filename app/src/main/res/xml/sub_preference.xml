@@ -1,5 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <Preference android:title="サブメニュー" />
-    <Preference android:title="特になし。" />
+    <Preference
+        android:summary="Cupcake"
+        android:title="Android 1.5" />
+    <Preference
+        android:summary="Donut"
+        android:title="Android 1.6" />
+    <Preference
+        android:summary="Eclair"
+        android:title="Android Android 2.0/2.1" />
+    <Preference
+        android:summary="Froyo"
+        android:title="Android 2.2" />
+    <Preference
+        android:summary="Gingerbread"
+        android:title="Android 2.3" />
+    <Preference
+        android:summary="Honeycomb"
+        android:title="Android 3.0/3.1/3.2" />
+    <Preference
+        android:summary="Ice Cream Sandwich"
+        android:title="Android 4.0" />
+    <Preference
+        android:summary="Jelly Bean"
+        android:title="Android 4.1/4.2/4.3" />
+    <Preference
+        android:summary="KitKat"
+        android:title="Android 4.4" />
+    <Preference
+        android:summary="Lollipop"
+        android:title="Android 5.0/5.1" />
+    <Preference
+        android:summary="Marshmallow"
+        android:title="Android 6.0" />
+    <Preference
+        android:summary="Nougat"
+        android:title="Android 7.0/7.1" />
+    <Preference
+        android:summary="Oreo"
+        android:title="Android 8.0/8.1" />
+    <Preference
+        android:summary="Pie"
+        android:title="Android 9" />
+    <Preference
+        android:summary="Q"
+        android:title="Android 10" />
+    <Preference
+        android:summary="R"
+        android:title="Android 11" />
 </PreferenceScreen>

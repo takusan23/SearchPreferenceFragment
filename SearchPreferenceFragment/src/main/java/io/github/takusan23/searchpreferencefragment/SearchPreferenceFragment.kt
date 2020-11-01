@@ -35,9 +35,15 @@ import kotlinx.android.synthetic.main.fragment_search_preference_fragment.*
  * fragment.arguments = bundle
  * ```
  *
- * UIを変更したい場合はこのクラスを継承して、
+ * ### UIを変更したい場合はこのクラスを継承して、
  * - [onCreateView]で指定するレイアウトに[EditText]とFragmentを置くView（[android.widget.FrameLayout]がいいらしい？）を最低限入れてね
  * - 指定できたら、[init]関数を呼んでください。第二引数以降は、レイアウトに置いたViewを指定してください。
+ *
+ * ### 仕組み
+ * 置いておいた[SearchPreferenceChildFragment]にEditTextのテキスト変更通知をLiveDataを利用して飛ばして、Preferenceを動的に追加しています。
+ *
+ * なお、PreferenceのFragment属性により画面推移が実行された状態の場合で検索を実行すると、Fragmentは最初のFragmentへ戻す（[androidx.fragment.app.FragmentManager.popBackStack]）を実行します
+ *
  * */
 open class SearchPreferenceFragment : Fragment() {
 
@@ -54,6 +60,11 @@ open class SearchPreferenceFragment : Fragment() {
          * ```
          * */
         const val PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP = "preference_xml_fragment_hash_map"
+
+        /**
+         * 最初に表示していた[SearchPreferenceChildFragment]へ戻す際に使う。基本使うことはない
+         * */
+        const val CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG = "child_search_fragment_first"
     }
 
     /** 検索の中身などを保持するViewModel */
@@ -105,11 +116,15 @@ open class SearchPreferenceFragment : Fragment() {
             preferenceFragment.arguments = Bundle().apply {
                 putInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID, preferenceXmlId)
             }
-            childFragmentManager.beginTransaction().replace(fragmentHostLayout.id, preferenceFragment).commit()
+            setFragment(preferenceFragment, CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG)
         }
 
         // テキストボックスの変更を監視
         editText.addTextChangedListener { edit ->
+            // もし、Fragmentを切り替えてしまった場合は、最初のFragment（SearchPreferenceChildFragment）へ戻す。
+            if (childFragmentManager.findFragmentById(fragmentHostLayout.id)?.tag != CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG) {
+                childFragmentManager.popBackStack(CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG, 0)
+            }
             viewModel.searchEditTextChange.value = edit.toString()
         }
 
@@ -129,7 +144,11 @@ open class SearchPreferenceFragment : Fragment() {
 
     }
 
-    /** Fragmentを置く関数 */
+    /**
+     * Fragmentを置く関数
+     * @param fragment その名の通り
+     * @param tag Fragmentを探すときに使えるタグと、popBackStackで使えるタグをセットできる
+     * */
     fun setFragment(fragment: Fragment, tag: String? = null) {
         if (fragmentHostLayout != null) {
             childFragmentManager.beginTransaction().replace(fragmentHostLayout!!.id, fragment, tag).addToBackStack(tag).commit()

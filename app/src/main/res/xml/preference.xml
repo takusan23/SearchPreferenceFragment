@@ -3,8 +3,8 @@
 
     <Preference
         android:fragment="io.github.takusan23.searchpreferencefragmentexample.SubSettingFragment"
-        android:summary="てすと"
-        android:title="Fragment切り替え" />
+        android:summary="Fragmentが切り替わります"
+        android:title="Android コードネーム" />
 
     <PreferenceCategory android:title="使い方">
         <Preference
@@ -28,16 +28,6 @@
             android:summary="5 / ロリポップ"
             android:title="最低Androidバージョン" />
 
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="検索ボックス実装">
-        <Preference
-            android:summary="検索ボックスのしたに潜るようにリストが表示されてるけど、これNestedScrollViewでFragmentを置くViewを囲って、NestedScrollViewには上方向に負のマージンを指定し、Fragmentを置くViewには上方向にパディングをつけることで実現してる。"
-            android:title="検索ボックス実装について" />
-
-        <Preference
-            android:summary="https://stackoverflow.com/questions/38563317/how-to-make-appbarlayout-background-transparent?rq=1"
-            android:title="検索ボックス実装で参考にした" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="クラス詳細">

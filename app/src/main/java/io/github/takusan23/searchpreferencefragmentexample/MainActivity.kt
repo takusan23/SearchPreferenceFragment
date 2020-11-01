@@ -33,8 +33,6 @@ class MainActivity : AppCompatActivity() {
             true
         }
         activity_main_bottom_navigation_bar.selectedItemId = R.id.activity_main_menu_default
-
-        println(SubSettingFragment::class.qualifiedName)
     }
 
 }
