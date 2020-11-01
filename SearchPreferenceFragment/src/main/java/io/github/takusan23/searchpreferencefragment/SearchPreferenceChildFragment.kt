@@ -23,7 +23,7 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
     private val defaultPreferenceResId by lazy { arguments?.getInt(PREFERENCE_XML_RESOURCE_ID) }
 
     /** 該当する設定項目の色をつける */
-    private val highLightColor by lazy { arguments?.getInt(SEARCH_SCROLL_HIGH_LIGHT_COLOR, Color.parseColor("#80ffff00")) ?: Color.parseColor("#ffff00") }
+    private val highLightColor by lazy { arguments?.getInt(SEARCH_SCROLL_HIGH_LIGHT_COLOR, Color.parseColor("#80ffff00")) ?: Color.parseColor("#80ffff00") }
 
     /** 該当する設定項目の色をつける間隔。 */
     private val delayTime by lazy { arguments?.getLong(SEARCH_PREFERENCE_BACKGROUND_REPEAT_DELAY, 500L) ?: 500L }
