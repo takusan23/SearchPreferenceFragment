@@ -68,7 +68,6 @@ class SearchPreferenceViewModel(application: Application, private val preference
 
             // 使うもの
             val title = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "title")
-            val fragmentAttr = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "fragment")
 
             // PreferenceCategoryなら名前を控える。
             if (parser.name == "PreferenceCategory" && isCategoryShow) {
@@ -91,27 +90,30 @@ class SearchPreferenceViewModel(application: Application, private val preference
                     // ここらへんはソースそのまま実装した
                     val attrs = Xml.asAttributeSet(parser)
                     Preference(context, attrs).also { pref ->
-                        pref.summary = if (categoryName != null) {
-                            HtmlCompat.fromHtml("${pref.summary}<br><font color=$categoryTextHighlightColor>$categoryName</font>", HtmlCompat.FROM_HTML_MODE_COMPACT)
-                        } else {
-                            pref.summary
-                        }
-                        // もしdependencyが設定されている場合は剥がす（表示できないエラーを回避）
-                        pref.dependency = null
-                        // 階層Fragmentが指定されていればそれを、なければnull
-                        pref.fragment = fragmentName
-                        val data = SearchPreferenceParseData(
-                            preference = pref,
-                            resId = xmlResId,
-                            preferenceTitle = pref.title.toString(),
-                            preferenceSummary = pref.summary?.toString(),
-                            preferenceCategory = categoryName,
-                            fragmentName = fragmentName
-                        )
-                        preferenceList.value?.add(data)
-                        pref.setOnPreferenceClickListener {
-                            changePreferenceScreen.value = data
-                            false
+                        // 表示中のみ
+                        if (pref.isVisible) {
+                            pref.summary = if (categoryName != null) {
+                                HtmlCompat.fromHtml("${pref.summary}<br><font color=$categoryTextHighlightColor>$categoryName</font>", HtmlCompat.FROM_HTML_MODE_COMPACT)
+                            } else {
+                                pref.summary
+                            }
+                            // もしdependencyが設定されている場合は剥がす（表示できないエラーを回避）
+                            pref.dependency = null
+                            // 階層Fragmentが指定されていればそれを、なければnull
+                            pref.fragment = fragmentName
+                            val data = SearchPreferenceParseData(
+                                preference = pref,
+                                resId = xmlResId,
+                                preferenceTitle = pref.title.toString(),
+                                preferenceSummary = pref.summary?.toString(),
+                                preferenceCategory = categoryName,
+                                fragmentName = fragmentName
+                            )
+                            preferenceList.value?.add(data)
+                            pref.setOnPreferenceClickListener {
+                                changePreferenceScreen.value = data
+                                false
+                            }
                         }
                     }
                 } else if (eventType == XmlPullParser.START_TAG) {
@@ -122,7 +124,6 @@ class SearchPreferenceViewModel(application: Application, private val preference
             }
             eventType = parser.next()
         }
-
     }
 
     /**

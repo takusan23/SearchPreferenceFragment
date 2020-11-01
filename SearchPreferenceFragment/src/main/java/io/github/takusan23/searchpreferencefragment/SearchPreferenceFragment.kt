@@ -113,9 +113,7 @@ open class SearchPreferenceFragment : Fragment() {
         if (savedInstanceState == null) {
             // PreferenceFragment設置
             val preferenceFragment = SearchPreferenceChildFragment()
-            preferenceFragment.arguments = Bundle().apply {
-                putInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID, preferenceXmlId)
-            }
+            preferenceFragment.arguments = arguments // めんどいから全部渡す
             setFragment(preferenceFragment, CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG)
         }
 

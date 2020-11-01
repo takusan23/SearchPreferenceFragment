@@ -22,12 +22,27 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
     /** 最初に表示されるPreferenceのID */
     private val defaultPreferenceResId by lazy { arguments?.getInt(PREFERENCE_XML_RESOURCE_ID) }
 
-    /** 検索結果を押したときに設定項目をハイライトさせる色 */
-    var SEARCH_SCROLL_HIGH_LIGHT_COLOR = Color.parseColor("#80ffff00")
+    /** 該当する設定項目の色をつける */
+    private val highLightColor by lazy { arguments?.getInt(SEARCH_SCROLL_HIGH_LIGHT_COLOR, Color.parseColor("#80ffff00")) ?: Color.parseColor("#ffff00") }
+
+    /** 該当する設定項目の色をつける間隔。 */
+    private val delayTime by lazy { arguments?.getLong(SEARCH_PREFERENCE_BACKGROUND_REPEAT_DELAY, 500L) ?: 500L }
+
+    /** 該当する設定項目の色をつけるの繰り返し回数 */
+    private val repeatCount by lazy { arguments?.getInt(SEARCH_PREFERENCE_REPEAT_COUNT, 9) ?: 9 }
 
     companion object {
         /** 最初に表示するPreferenceのリソースID */
         const val PREFERENCE_XML_RESOURCE_ID = "preference_xml_resource_id"
+
+        /** [SEARCH_SCROLL_HIGH_LIGHT_COLOR]の切り替えを何回行うか。奇数じゃないとだめかも */
+        var SEARCH_PREFERENCE_REPEAT_COUNT = "repeat_count"
+
+        /** [SEARCH_SCROLL_HIGH_LIGHT_COLOR]の切り替えの間隔 */
+        var SEARCH_PREFERENCE_BACKGROUND_REPEAT_DELAY = "repeat_delay"
+
+        /** 検索結果を押したときに設定項目をハイライトさせる色 */
+        var SEARCH_SCROLL_HIGH_LIGHT_COLOR = "high_light_color"
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -136,20 +151,20 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
             }
             listView.smoothScrollToPosition(pos + visibleItem)
             // リピートさせる
-            var delayTime = 200L
-            repeat(9) { // 奇数回だと色ついて終わる
+            var time = delayTime
+            repeat(repeatCount) { count ->
                 // コルーチンだともっときれいにかけそう
-                listView.postDelayed(delayTime) {
+                listView.postDelayed(time) {
                     // RecyclerViewの指定した位置のViewを取得して背景色を変更
                     (listView.layoutManager as LinearLayoutManager).findViewByPosition(pos)?.apply {
-                        background = if (background == null) {
-                            ColorDrawable(SEARCH_SCROLL_HIGH_LIGHT_COLOR)
-                        } else {
-                            null
+                        background = if (background == null) ColorDrawable(highLightColor) else null
+                        // 最後は強制null
+                        if (count == 8) {
+                            background = null
                         }
                     }
                 }
-                delayTime += 500
+                time += delayTime
             }
         }
     }
@@ -163,7 +178,10 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                 val preferenceCount = group.preferenceCount
                 repeat(preferenceCount) { index ->
                     val preference = group.getPreference(index)
-                    add(preference)
+                    // 表示中のみインデックス化
+                    if (preference.isVisible) {
+                        add(preference)
+                    }
                     if (preference is PreferenceGroup) {
                         getChildPreference(preference)
                     }
