@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SearchPreferenceFragmentExample</string>
+    <string name="android_codename">Android Codename</string>
 </resources>

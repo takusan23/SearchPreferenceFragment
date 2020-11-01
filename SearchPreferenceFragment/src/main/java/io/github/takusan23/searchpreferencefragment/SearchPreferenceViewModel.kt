@@ -1,12 +1,8 @@
 package io.github.takusan23.searchpreferencefragment
 
 import android.app.Application
-import android.graphics.Color
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
 import android.util.Log
-import androidx.annotation.experimental.Experimental
+import android.util.Xml
 import androidx.core.text.HtmlCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
@@ -72,8 +68,6 @@ class SearchPreferenceViewModel(application: Application, private val preference
 
             // 使うもの
             val title = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "title")
-            val summary = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "summary")
-            val key = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "key")
             val fragmentAttr = parser.getAttributeValue(PREFERNCE_ANDROID_NAMESPACE, "fragment")
 
             // PreferenceCategoryなら名前を控える。
@@ -86,27 +80,29 @@ class SearchPreferenceViewModel(application: Application, private val preference
                 }
             }
 
+
             // PreferenceScreenはいらない
             if (parser.name != null && parser.name != "PreferenceScreen" && parser.name != "PreferenceCategory") {
 
                 // title が null 以外
                 if (title != null) {
-                    val preference = Preference(context).also { pref ->
-                        pref.title = title
+                    // ここらへんはソースそのまま実装した
+                    val attrs = Xml.asAttributeSet(parser)
+                    Preference(context, attrs).also { pref ->
                         pref.summary = if (categoryName != null) {
-                            HtmlCompat.fromHtml("$summary<br><font color=$categoryTextHighlightColor>$categoryName</font>", HtmlCompat.FROM_HTML_MODE_COMPACT)
+                            HtmlCompat.fromHtml("${pref.summary}<br><font color=$categoryTextHighlightColor>$categoryName</font>", HtmlCompat.FROM_HTML_MODE_COMPACT)
                         } else {
-                            summary
+                            pref.summary
                         }
-                        pref.key = key
                         // 属性の方を優先して登録する。なければ遷移先Fragment
                         pref.fragment = fragmentAttr ?: fragmentName
+                        val data = SearchPreferenceParseData(pref, xmlResId, pref.title.toString(), pref.summary.toString(), categoryName, fragmentName)
+                        preferenceList.value?.add(data)
                         pref.setOnPreferenceClickListener {
-                            changePreferenceScreen.value = SearchPreferenceParseData(it, xmlResId, title, summary, categoryName, fragmentName)
+                            changePreferenceScreen.value = data
                             false
                         }
                     }
-                    preferenceList.value?.add(SearchPreferenceParseData(preference, xmlResId, title, summary, categoryName, fragmentName))
                 } else if (eventType == XmlPullParser.START_TAG) {
                     Log.e(javaClass.simpleName, "PreferenceのXML解析に失敗しました。")
                     Log.e(javaClass.simpleName, "${parser.lineNumber}行目")
