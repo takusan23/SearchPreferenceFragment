@@ -1,14 +1,18 @@
 package io.github.takusan23.searchpreferencefragment
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.core.view.postDelayed
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.preference.*
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 /**
  * [SearchPreferenceFragment]に置くFragment。設定項目一覧はこのFragmentで表示している
@@ -17,6 +21,9 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
 
     /** 最初に表示されるPreferenceのID */
     private val defaultPreferenceResId by lazy { arguments?.getInt(PREFERENCE_XML_RESOURCE_ID) }
+
+    /** 検索結果を押したときに設定項目をハイライトさせる色 */
+    var SEARCH_SCROLL_HIGH_LIGHT_COLOR = Color.parseColor("#80ffff00")
 
     companion object {
         /** 最初に表示するPreferenceのリソースID */
@@ -59,31 +66,9 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                     (fragment as? PreferenceFragmentCompat)?.apply {
                         val scrollTitle = arguments?.getString("scroll_title")
                         val scrollKey = arguments?.getString("scroll_key")
-
-                        val pos = getAllPreference(preferenceScreen).indexOfFirst { preference ->
-                            if (scrollKey != null) {
-                                preference.key == scrollKey
-                            } else {
-                                Log.e(javaClass.simpleName, "Preferenceにkeyが設定されていなかったため、同じタイトルの設定項目へスクロールします。")
-                                preference.title == scrollTitle
-                            }
-                        }
-                        // なんか遅延させると動く
-                        view?.postDelayed({
-                            if (isAdded) {
-                                /**
-                                 * LayoutManager経由でスクロールする。RecyclerViewにもスクロール関数が生えてるけど、なんか実装空っぽだった
-                                 *
-                                 * なので、[PreferenceFragmentCompat.scrollToPreference]も、RecyclerViewの実装空っぽスクロール関数を呼んでいるため動かない。
-                                 * */
-                                (listView.layoutManager as LinearLayoutManager).apply {
-                                    scrollToPositionWithOffset(pos, 0)
-                                }
-                            }
-                        }, 500)
-
+                        // スクロール
+                        scroll(getAllPreference(preferenceScreen), listView, scrollKey, scrollTitle)
                     }
-
                 }
             })
             return true
@@ -115,41 +100,64 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
             }
         }
 
+        // 表示中のPreferenceを配列にして持っておく
+        val preferenceList = getAllPreference(preferenceScreen)
+
         // 検索結果Preferenceを押したときのコールバック的なLiveData
         viewModel.changePreferenceScreen.observe(viewLifecycleOwner) { result ->
             // 同じリソースIDなら
             if (result.resId == defaultPreferenceResId) {
-                // スクロール
-                val pos = getAllPreference(preferenceScreen).indexOfFirst { preference ->
-                    if (result.preference.key != null) {
-                        preference.key == result.preference.key
-                    } else {
-                        Log.e(javaClass.simpleName, "Preferenceにkeyが設定されていなかったため、同じタイトルの設定項目へスクロールします。")
-                        preference.title == result.preferenceTitle
-                    }
-                }
-                // なんか遅延させると動く
-                view.postDelayed({
-                    if (isAdded) {
-                        /**
-                         * LayoutManager経由でスクロールする。RecyclerViewにもスクロール関数が生えてるけど、なんか実装空っぽだった
-                         *
-                         * なので、[PreferenceFragmentCompat.scrollToPreference]も、RecyclerViewの実装空っぽスクロール関数を呼んでいるため動かない。
-                         * */
-                        (listView.layoutManager as LinearLayoutManager).apply {
-                            scrollToPositionWithOffset(pos, 0)
-                        }
-                    }
-                }, 500)
+                scroll(preferenceList, listView, result.preference.key, result.preferenceTitle)
             }
         }
 
     }
 
+    private fun scroll(preferenceList: ArrayList<Preference>, listView: RecyclerView, preferenceKey: String?, preferenceTitle: String?) {
+        // スクロール
+        val pos = preferenceList.indexOfFirst { preference ->
+            if (preferenceKey != null) {
+                preference.key == preferenceKey
+            } else {
+                Log.e(javaClass.simpleName, "Preferenceにkeyが設定されていなかったため、同じタイトルの設定項目へスクロールします。")
+                preference.title == preferenceTitle
+            }
+        }
+        // なんか遅延させると動く
+        listView.postDelayed(500) {
+            /**
+             * LayoutManager経由でスクロールする。RecyclerViewにもスクロール関数が生えてるけど、なんか実装空っぽだった
+             *
+             * なので、[PreferenceFragmentCompat.scrollToPreference]も、RecyclerViewの実装空っぽスクロール関数を呼んでいるため動かない。
+             * */
+            val visibleItem = (listView.layoutManager as LinearLayoutManager).let {
+                // 真ん中へスクロールさせたいので
+                (it.findLastCompletelyVisibleItemPosition() - it.findFirstVisibleItemPosition()) / 2
+            }
+            listView.smoothScrollToPosition(pos + visibleItem)
+            // リピートさせる
+            var delayTime = 200L
+            repeat(9) { // 奇数回だと色ついて終わる
+                // コルーチンだともっときれいにかけそう
+                listView.postDelayed(delayTime) {
+                    // RecyclerViewの指定した位置のViewを取得して背景色を変更
+                    (listView.layoutManager as LinearLayoutManager).findViewByPosition(pos)?.apply {
+                        background = if (background == null) {
+                            ColorDrawable(SEARCH_SCROLL_HIGH_LIGHT_COLOR)
+                        } else {
+                            null
+                        }
+                    }
+                }
+                delayTime += 500
+            }
+        }
+    }
+
     /** Preferenceをすべて見つけて配列にして返す関数 */
     private fun getAllPreference(preferenceScreen: PreferenceScreen): ArrayList<Preference> {
         // 設定項目を配列にしまう
-        val preferenceList = arrayListOf<Preference>().apply {
+        return arrayListOf<Preference>().apply {
             // 再帰的に呼び出す
             fun getChildPreference(group: PreferenceGroup) {
                 val preferenceCount = group.preferenceCount
@@ -163,7 +171,6 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
             }
             getChildPreference(preferenceScreen)
         }
-        return preferenceList
     }
 
 }

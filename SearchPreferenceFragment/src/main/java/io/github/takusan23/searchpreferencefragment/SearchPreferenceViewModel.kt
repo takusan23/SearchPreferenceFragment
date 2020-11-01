@@ -72,8 +72,10 @@ class SearchPreferenceViewModel(application: Application, private val preference
 
             // PreferenceCategoryなら名前を控える。
             if (parser.name == "PreferenceCategory" && isCategoryShow) {
+                val attrs = Xml.asAttributeSet(parser)
+                val categoryPreference = Preference(context, attrs) // ローカライズに対応させるため
                 if (eventType == XmlPullParser.START_TAG) {
-                    categoryName = title // 囲いはじめ
+                    categoryName = categoryPreference.title.toString() // 囲いはじめ
                 }
                 if (eventType == XmlPullParser.END_TAG) {
                     categoryName = null // 終了タグ
@@ -94,8 +96,10 @@ class SearchPreferenceViewModel(application: Application, private val preference
                         } else {
                             pref.summary
                         }
-                        // 属性の方を優先して登録する。なければ遷移先Fragment
-                        pref.fragment = fragmentAttr ?: fragmentName
+                        // もしdependencyが設定されている場合は剥がす（表示できないエラーを回避）
+                        pref.dependency = null
+                        // 階層Fragmentが指定されていればそれを、なければnull
+                        pref.fragment = fragmentName
                         val data = SearchPreferenceParseData(
                             preference = pref,
                             resId = xmlResId,
