@@ -78,7 +78,7 @@ open class SearchPreferenceFragment : Fragment() {
      * @param editText 検索時に利用するEditText
      * @param fragmentHostLayout Fragmentを置くView
      * */
-    fun init(savedInstanceState: Bundle?, editText: EditText?, fragmentHostLayout: View?) {
+    fun init(savedInstanceState: Bundle?, editText: EditText, fragmentHostLayout: View) {
         // もらう
         val preferenceXmlId = arguments?.getInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID)
         val preferenceFragmentMap = arguments?.getSerializable(PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP) as? HashMap<String?, Int>
@@ -86,14 +86,6 @@ open class SearchPreferenceFragment : Fragment() {
         // 必須項目があるか
         if (preferenceXmlId == null) {
             Log.e(javaClass.simpleName, "最初に表示するPreferenceのXMLのリソースIDが確認にできませんでした。")
-            return
-        }
-        if (editText == null) {
-            Log.e(javaClass.simpleName, "検索で利用するEditTextが未指定です。")
-            return
-        }
-        if (fragmentHostLayout == null) {
-            Log.e(javaClass.simpleName, "Fragmentを表示するViewが未指定です。")
             return
         }
         if (preferenceFragmentMap == null) {

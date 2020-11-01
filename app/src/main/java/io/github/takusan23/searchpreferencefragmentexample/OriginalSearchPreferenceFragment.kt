@@ -17,7 +17,7 @@ class OriginalSearchPreferenceFragment : SearchPreferenceFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        // super.onViewCreated(view, savedInstanceState) // 継承元のonViewCreated呼ばないのでコメントアウト
         init(savedInstanceState, fragment_original_search_edit_text, fragment_original_search_fragment_host)
     }
 

@@ -2,11 +2,11 @@ package io.github.takusan23.searchpreferencefragment
 
 import android.os.Bundle
 import android.view.View
-import androidx.activity.addCallback
 import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceGroup
+import androidx.recyclerview.widget.LinearLayoutManager
 
 /**
  * [SearchPreferenceFragment]に置くFragment。設定項目一覧はこのFragmentで表示している
@@ -64,20 +64,25 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
             }
         }
 
-/*
         // 検索結果Preferenceを押したときのコールバック的なLiveData
         viewModel.changePreferenceScreen.observe(viewLifecycleOwner) { result ->
-            // 違うリソースIDなら
-            if (result.resId != defaultPreferenceResId) {
-                // PreferenceFragment設置
-                val preferenceFragment = SearchPreferenceChildFragment()
-                preferenceFragment.arguments = Bundle().apply {
-                    putInt(PREFERENCE_XML_RESOURCE_ID, result.resId)
-                }
-                (requireParentFragment() as SearchPreferenceFragment).setFragment(preferenceFragment, result.resId.toString())
+            // 同じリソースIDなら
+            if (result.resId == defaultPreferenceResId) {
+                // スクロール
+                val pos = getAllPreference().indexOfFirst { preference -> preference.title == result.preferenceTitle }
+                // なんか遅延させると動く
+                view.postDelayed({
+                    /**
+                     * LayoutManager経由でスクロールする。RecyclerViewにもスクロール関数が生えてるけど、なんか実装空っぽだった
+                     *
+                     * なので、[PreferenceFragmentCompat.scrollToPreference]も、RecyclerViewの実装空っぽスクロール関数を呼んでいるため動かない。
+                     * */
+                    (listView.layoutManager as LinearLayoutManager).apply {
+                        scrollToPositionWithOffset(pos, 0)
+                    }
+                }, 1000)
             }
         }
-*/
 
     }
 

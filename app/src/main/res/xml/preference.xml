@@ -63,6 +63,7 @@
         <Preference
             android:icon="@drawable/ic_baseline_android_24"
             android:summary="takusan_23"
+            android:key="setting_kono_app"
             android:title="SearchPreferenceFragment" />
     </PreferenceCategory>
 </PreferenceScreen>
