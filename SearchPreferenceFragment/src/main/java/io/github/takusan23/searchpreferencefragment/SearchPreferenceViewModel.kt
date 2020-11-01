@@ -96,7 +96,14 @@ class SearchPreferenceViewModel(application: Application, private val preference
                         }
                         // 属性の方を優先して登録する。なければ遷移先Fragment
                         pref.fragment = fragmentAttr ?: fragmentName
-                        val data = SearchPreferenceParseData(pref, xmlResId, pref.title.toString(), pref.summary.toString(), categoryName, fragmentName)
+                        val data = SearchPreferenceParseData(
+                            preference = pref,
+                            resId = xmlResId,
+                            preferenceTitle = pref.title.toString(),
+                            preferenceSummary = pref.summary?.toString(),
+                            preferenceCategory = categoryName,
+                            fragmentName = fragmentName
+                        )
                         preferenceList.value?.add(data)
                         pref.setOnPreferenceClickListener {
                             changePreferenceScreen.value = data
