@@ -7,9 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import androidx.activity.addCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
 import kotlinx.android.synthetic.main.fragment_search_preference_fragment.*
 
 /**
@@ -71,6 +74,28 @@ open class SearchPreferenceFragment : Fragment() {
     private lateinit var viewModel: SearchPreferenceViewModel
 
     private var fragmentHostLayout: View? = null
+
+    /**
+     * 表示しているPreferenceを押したときに呼ばれる高階関数。
+     *
+     * [Preference.setOnPreferenceClickListener]の代わり
+     *
+     * */
+    var onPreferenceClickFunc: ((preference: Preference?) -> Unit)? = null
+
+    /**
+     * 切り替え先Fragmentが[androidx.preference.PreferenceFragmentCompat]だったときに、Preferenceを押したときに呼ばれる関数
+     *
+     * (遷移先Fragmentとは→Preference要素に「android.fragment」属性として指定したFragmentのこと。以下例)
+     *
+     * ```xml
+     * <Preference
+     *      android:title="Fragment切り替え"
+     *      android:fragment="ChildPreferenceFragment"  // ここで指定したFragmentのこと
+     *      />
+     * ```
+     * */
+    var onChildPreferenceFragmentCompatClickFunc: ((preference: Preference?) -> Unit)? = null
 
     /** レイアウト指定 */
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

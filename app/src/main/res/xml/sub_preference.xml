@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <Preference
+        android:fragment="io.github.takusan23.searchpreferencefragmentexample.SubSettingFragment"
         android:summary="Cupcake"
         android:title="Android 1.5" />
     <Preference
