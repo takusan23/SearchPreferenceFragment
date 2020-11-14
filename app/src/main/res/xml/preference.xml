@@ -47,13 +47,22 @@
         <Preference
             android:summary="SearchPreferenceViewModelを初期化するときに使っている。ViewModelに引数を渡したいので。DI使えば楽にできるって聞いたけど理解できない"
             android:title="SearchPreferenceViewModelFactory" />
+
+        <Preference
+            android:summary="Preference一覧表示で使うRecyclerViewのAdapter。背景色を設定するのに使っている"
+            android:title="SearchPreferenceChildRecyclerViewAdapter" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="その他">
         <Preference
+            android:key="setting_search"
+            android:summary="SearchPreferenceFragment#search(検索ワード)"
+            android:title="実はEditTextなしでも使える" />
+
+        <Preference
             android:icon="@drawable/ic_baseline_android_24"
-            android:summary="takusan_23"
             android:key="setting_kono_app"
+            android:summary="takusan_23"
             android:title="SearchPreferenceFragment" />
     </PreferenceCategory>
 </PreferenceScreen>

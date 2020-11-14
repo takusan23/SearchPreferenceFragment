@@ -1,8 +1,6 @@
 package io.github.takusan23.searchpreferencefragment
 
-import android.annotation.SuppressLint
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,7 +10,10 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import androidx.preference.*
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceGroup
+import androidx.preference.PreferenceScreen
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -38,16 +39,16 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
         const val PREFERENCE_XML_RESOURCE_ID = "preference_xml_resource_id"
 
         /** [SEARCH_SCROLL_HIGH_LIGHT_COLOR]の切り替えを何回行うか。偶数である必要があります。 */
-        var SEARCH_PREFERENCE_REPEAT_COUNT = "repeat_count"
+        const val SEARCH_PREFERENCE_REPEAT_COUNT = "repeat_count"
 
         /** [SEARCH_SCROLL_HIGH_LIGHT_COLOR]の切り替えの間隔 */
-        var SEARCH_PREFERENCE_BACKGROUND_REPEAT_DELAY = "repeat_delay"
+        const val SEARCH_PREFERENCE_BACKGROUND_REPEAT_DELAY = "repeat_delay"
 
         /** 検索結果を押したときに設定項目をハイライトさせる色 */
-        var SEARCH_SCROLL_HIGH_LIGHT_COLOR = "high_light_color"
+        const val SEARCH_SCROLL_HIGH_LIGHT_COLOR = "high_light_color"
 
         /** Preferenceが検索結果のもので有るか。[Bundle.getBoolean]で使えます */
-        val PREFERENCE_SEARCH_RESULT_ITEM = "___search_preference_child_fragment_search_result"
+        const val PREFERENCE_SEARCH_RESULT_ITEM = "___search_preference_child_fragment_search_result"
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -106,7 +107,7 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                         scroll(getAllPreference(preferenceScreen), listView, scrollKey, scrollTitle)
 
                         // クリックイベントを上書きするか
-                        val clickFunc = (requireParentFragment() as? SearchPreferenceFragment)?.onChildPreferenceFragmentCompatClickFunc
+                        val clickFunc = searchPreferenceFragment.onChildPreferenceFragmentCompatClickFunc
                         if (clickFunc != null) {
                             getAllPreference(preferenceScreen).forEach { preference ->
                                 preference.setOnPreferenceClickListener {
@@ -116,7 +117,7 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                                         // Fragment未設定時のみ
                                         clickFunc(preference)
                                     }
-                                    false
+                                    true
                                 }
                             }
                         }
@@ -146,19 +147,26 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                 getAllPreference(preferenceFragmentCompat.preferenceScreen).forEach { preference ->
                     // Fragmentが設定されている場合は、処理を変える
                     val fragmentPath = preference.fragment
+                    var fragment: Fragment? = null
                     if (fragmentPath != null) {
                         // そのままの実装でFragmentを置き換えるともれなくエラーが出るので書き換える
-                        val fragment = createFragment(fragmentPath)
+                        fragment = createFragment(fragmentPath)
                         // 再帰的に呼ぶ
                         if (fragment is PreferenceFragmentCompat) {
                             preferenceFragmentFix(fragment)
                         }
                         // onPreferenceTreeClickを呼ばないため
                         preference.fragment = null
-                        // fragmentが設定されているときのみクリックイベントを書き換え
+                    }
+                    val clickFunc = searchPreferenceFragment.onChildPreferenceFragmentCompatClickFunc
+                    // fragmentが設定されている か onChildPreferenceFragmentCompatClickFunc がnull以外ならクリックイベントをセット
+                    if (fragment != null || clickFunc != null) {
                         preference.setOnPreferenceClickListener {
-                            searchPreferenceFragment.setFragment(fragment)
-                            false
+                            if (fragment != null) {
+                                searchPreferenceFragment.setFragment(fragment)
+                            }
+                            clickFunc?.invoke(it)
+                            true
                         }
                     }
                 }

@@ -6,8 +6,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.SearchView
 import androidx.activity.addCallback
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.children
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -40,7 +42,8 @@ import kotlinx.android.synthetic.main.fragment_search_preference_fragment.*
  *
  * ### UIを変更したい場合はこのクラスを継承して、
  * - [onCreateView]で指定するレイアウトに[EditText]とFragmentを置くView（[android.widget.FrameLayout]がいいらしい？）を最低限入れてね
- * - 指定できたら、[init]関数を呼んでください。第二引数以降は、レイアウトに置いたViewを指定してください。
+ * - 指定できたら、[onViewCreated]あたりで[init]関数を呼んでください。第二引数以降は、レイアウトに置いたViewを指定してください。
+ *      - [onViewCreated]の[super]はコメントアウトしてね
  *
  * ### 仕組み
  * 置いておいた[SearchPreferenceChildFragment]にEditTextのテキスト変更通知をLiveDataを利用して飛ばして、Preferenceを動的に追加しています。
@@ -73,6 +76,7 @@ open class SearchPreferenceFragment : Fragment() {
     /** 検索の中身などを保持するViewModel */
     private lateinit var viewModel: SearchPreferenceViewModel
 
+    /** Fragmentを設置するView */
     private var fragmentHostLayout: View? = null
 
     /**
@@ -86,6 +90,8 @@ open class SearchPreferenceFragment : Fragment() {
     /**
      * 切り替え先Fragmentが[androidx.preference.PreferenceFragmentCompat]だったときに、Preferenceを押したときに呼ばれる関数
      *
+     * ただ、この関数を使うより各PreferenceCompatFragment(を継承したFragment)でクリックイベントを実装したほうがいいと思う(わかりにくくなりそう)。個人的非推奨
+     *
      * (遷移先Fragmentとは→Preference要素に「android.fragment」属性として指定したFragmentのこと。以下例)
      *
      * ```xml
@@ -96,6 +102,11 @@ open class SearchPreferenceFragment : Fragment() {
      * ```
      * */
     var onChildPreferenceFragmentCompatClickFunc: ((preference: Preference?) -> Unit)? = null
+
+    /**
+     * Fragmentが切り替わった際に呼ばれる関数です。
+     * */
+    var onPreferenceFragmentChangeEventFunc: (() -> Unit)? = null
 
     /** レイアウト指定 */
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -110,11 +121,26 @@ open class SearchPreferenceFragment : Fragment() {
 
     /**
      * [onViewCreated]あたりでこの関数を呼んでください。Fragment設置やViewModelの用意をします。
+     *
+     * なお、この関数を使わなくても[initFragment]を最初に呼んで、検索したいときに[search]を呼べばこの関数を利用しなくてもいいです。(EditTextがなくても良くなる)
+     *
      * @param savedInstanceState 画面回転時かどうかの判断で利用。[onViewCreated]の第二引数のやつ
      * @param editText 検索時に利用するEditText
      * @param fragmentHostLayout Fragmentを置くView
      * */
     fun init(savedInstanceState: Bundle?, editText: EditText, fragmentHostLayout: View) {
+
+        // Fragmentをセットする
+        initFragment(savedInstanceState, fragmentHostLayout)
+
+        // EditTextをセットする
+        initEditText(editText)
+    }
+
+    /**
+     * Fragmentをセットする関数。必須項目
+     * */
+    fun initFragment(savedInstanceState: Bundle?, fragmentHostLayout: View) {
         // もらう
         val preferenceXmlId = arguments?.getInt(SearchPreferenceChildFragment.PREFERENCE_XML_RESOURCE_ID)
         val preferenceFragmentMap = arguments?.getSerializable(PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP) as? HashMap<String?, Int>
@@ -142,20 +168,6 @@ open class SearchPreferenceFragment : Fragment() {
             setFragment(preferenceFragment, CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG)
         }
 
-        // テキストボックスの変更を監視
-        editText.addTextChangedListener(afterTextChanged = { text ->
-            // もし、Fragmentを切り替えてしまった場合は、最初のFragment（SearchPreferenceChildFragment）へ戻す。
-            if (childFragmentManager.findFragmentById(fragmentHostLayout.id)?.tag != CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG) {
-                childFragmentManager.popBackStack(CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG, 0)
-            }
-            viewModel.searchEditTextChange.postValue(text.toString())
-        })
-
-        // PreferenceのXML切り替わったらEditTextクリア
-        viewModel.changePreferenceScreen.observe(viewLifecycleOwner) { result ->
-            editText.setText("")
-        }
-
         // 戻るキー押したとき
         requireActivity().onBackPressedDispatcher.addCallback(this) {
             if (childFragmentManager.findFragmentById(fragmentHostLayout.id)?.tag == CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG) {
@@ -165,6 +177,46 @@ open class SearchPreferenceFragment : Fragment() {
             }
         }
 
+        // PreferenceのXML切り替わったら変更高階関数を呼ぶ
+        viewModel.changePreferenceScreen.observe(viewLifecycleOwner) { result ->
+            onPreferenceFragmentChangeEventFunc?.invoke()
+        }
+
+    }
+
+    /**
+     * EditTextをセットする関数。利用すると自動でEditTextの中身を監視します。
+     * こっちは必須じゃないけど、代わりにEditTextの変更イベントを検知して、[search]関数を呼ぶ必要があります。
+     * */
+    fun initEditText(editText: EditText) {
+
+        // テキストボックスの変更を監視
+        editText.addTextChangedListener(afterTextChanged = { text ->
+            // もし、Fragmentを切り替えてしまった場合は、最初のFragment（SearchPreferenceChildFragment）へ戻す。
+            search(text.toString())
+        })
+
+        // PreferenceのXML切り替わったらEditTextクリア
+        viewModel.changePreferenceScreen.observe(viewLifecycleOwner) { result ->
+            editText.setText("")
+        }
+    }
+
+    /**
+     * 検索する関数。[initEditText]の中で使ってる。検索ボタンを実装したい場合はどうぞ
+     * [EditText.addTextChangedListener]の中で利用する
+     * @param searchWord 検索ワード
+     * */
+    fun search(searchWord: String) {
+        if (fragmentHostLayout == null) {
+            Log.e(javaClass.simpleName, "Fragmentを設置するfragmentHostLayoutがnullです")
+            return
+        }
+        // もし、Fragmentを切り替えてしまった場合は、最初のFragment（SearchPreferenceChildFragment）へ戻す。
+        if (childFragmentManager.findFragmentById(fragmentHostLayout!!.id)?.tag != CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG) {
+            childFragmentManager.popBackStack(CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG, 0)
+        }
+        viewModel.searchEditTextChange.postValue(searchWord)
     }
 
     /**

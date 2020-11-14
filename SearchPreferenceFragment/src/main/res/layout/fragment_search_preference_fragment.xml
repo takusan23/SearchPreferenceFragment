@@ -23,7 +23,8 @@
                     android:id="@+id/search_fragment_input"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="設定項目を検索"
+                    android:drawableStart="@drawable/ic_outline_search_24"
+                    android:hint="@string/search_hint_setting"
                     android:maxLines="1" />
             </LinearLayout>
 
