@@ -385,6 +385,7 @@ requireParentFragment().lifecycle.addObserver(object : LifecycleObserver {
 `Lifecycle.Event.ON_START`以外にもありますので試してみては？超便利
 
 # ライセンス
+マテリアルアイコンとマテリアルデザインのライブラリのライセンスも一応書いておく
 
 ```
 --- takusan23/SearchPreferenceFragment ---
@@ -399,4 +400,15 @@ requireParentFragment().lifecycle.addObserver(object : LifecycleObserver {
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License. 
+ 
+ --- google/material-design-icons ---
+
+We have made these icons available for you to incorporate into your products under the Apache License Version 2.0.
+Feel free to remix and re-share these icons and documentation in your products. 
+We'd love attribution in your app's about screen, but it's not required. The only thing we ask is that you not re-sell these icons.
+
+--- material-components/material-components-android ---
+
+Apache-2.0 License
+
 ```
