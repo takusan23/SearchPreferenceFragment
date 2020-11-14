@@ -1,5 +1,6 @@
 package io.github.takusan23.searchpreferencefragment
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -11,10 +12,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceGroup
-import androidx.preference.PreferenceScreen
+import androidx.preference.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -33,13 +31,13 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
     private val delayTime by lazy { arguments?.getLong(SEARCH_PREFERENCE_BACKGROUND_REPEAT_DELAY, 500L) ?: 500L }
 
     /** 該当する設定項目の色をつけるの繰り返し回数 */
-    private val repeatCount by lazy { arguments?.getInt(SEARCH_PREFERENCE_REPEAT_COUNT, 9) ?: 9 }
+    private val repeatCount by lazy { arguments?.getInt(SEARCH_PREFERENCE_REPEAT_COUNT, 10) ?: 10 }
 
     companion object {
         /** 最初に表示するPreferenceのリソースID */
         const val PREFERENCE_XML_RESOURCE_ID = "preference_xml_resource_id"
 
-        /** [SEARCH_SCROLL_HIGH_LIGHT_COLOR]の切り替えを何回行うか。奇数じゃないとだめかも */
+        /** [SEARCH_SCROLL_HIGH_LIGHT_COLOR]の切り替えを何回行うか。偶数である必要があります。 */
         var SEARCH_PREFERENCE_REPEAT_COUNT = "repeat_count"
 
         /** [SEARCH_SCROLL_HIGH_LIGHT_COLOR]の切り替えの間隔 */
@@ -47,6 +45,9 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
 
         /** 検索結果を押したときに設定項目をハイライトさせる色 */
         var SEARCH_SCROLL_HIGH_LIGHT_COLOR = "high_light_color"
+
+        /** Preferenceが検索結果のもので有るか。[Bundle.getBoolean]で使えます */
+        val PREFERENCE_SEARCH_RESULT_ITEM = "___search_preference_child_fragment_search_result"
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -61,12 +62,15 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
     private val searchPreferenceFragment by lazy { (requireParentFragment() as SearchPreferenceFragment) }
 
     /**
-     * Fragment切り替えに失敗するので手直し
+     * Fragment切り替え / クリックイベントを呼ぶ 。スクロールの処理はここじゃない
      * その他にも検索結果押したときもandroid:fragment指定時はこれが使われる
      * */
     override fun onPreferenceTreeClick(preference: Preference?): Boolean {
-        // 高階関数を呼ぶ
-        searchPreferenceFragment.onPreferenceClickFunc?.invoke(preference)
+        // 高階関数を呼ぶ。ただし検索結果の場合は呼ばない
+        if (preference?.extras?.getBoolean(PREFERENCE_SEARCH_RESULT_ITEM, false) == false) {
+            searchPreferenceFragment.onPreferenceClickFunc?.invoke(preference)
+        }
+        // Fragment遷移（せんい）
         if (preference?.fragment != null) {
 
             // なんか文字列からFragment作ってる
@@ -93,6 +97,9 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                      * もし遷移先Fragmentが[PreferenceFragmentCompat]なら該当Preferenceまでスクロールを実行させる
                      * */
                     (fragment as? PreferenceFragmentCompat)?.apply {
+
+                        listView.adapter = SearchPreferenceChildRecyclerViewAdapter(preferenceManager.preferenceScreen)
+
                         val scrollTitle = arguments?.getString("scroll_title")
                         val scrollKey = arguments?.getString("scroll_key")
                         // スクロール
@@ -166,11 +173,14 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
         return parentFragmentManager.fragmentFactory.instantiate(requireActivity().classLoader, path)
     }
 
+    /** Fragment初期化？ */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         // ViewModel取得
         val viewModel by viewModels<SearchPreferenceViewModel>({ requireParentFragment() })
+
+        listView.adapter = SearchPreferenceChildRecyclerViewAdapter(preferenceManager.preferenceScreen)
 
         // SearchPreferenceFragmentにあるEditTextのLiveData
         viewModel.searchEditTextChange.observe(viewLifecycleOwner) { editText ->
@@ -203,6 +213,13 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
 
     }
 
+    /**
+     * 該当Preferenceまでスクロールさせ、該当Preferenceの色を変える
+     * @param listView [PreferenceFragmentCompat.getListView]
+     * @param preferenceKey スクロールさせるPreferenceに付けられたKey
+     * @param preferenceTitle [preferenceKey]がnullの際は同じタイトルのPreferenceを見つけます。
+     * @param preferenceList [PreferenceFragmentCompat]で表示されてるPreferenceの配列。位置を特定するのに使う。[getAllPreference]参照
+     * */
     private fun scroll(preferenceList: ArrayList<Preference>, listView: RecyclerView, preferenceKey: String?, preferenceTitle: String?) {
         // スクロール
         val pos = preferenceList.indexOfFirst { preference ->
@@ -233,13 +250,13 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
             repeat(repeatCount) { count ->
                 // コルーチンだともっときれいにかけそう
                 listView.postDelayed(time) {
-                    // RecyclerViewの指定した位置のViewを取得して背景色を変更
-                    (listView.layoutManager as LinearLayoutManager).findViewByPosition(pos)?.apply {
-                        background = if (background == null) ColorDrawable(highLightColor) else null
-                        // 最後は強制null
-                        if (count == 8) {
-                            background = null
+                    (listView.adapter as? SearchPreferenceChildRecyclerViewAdapter)?.apply {
+                        if (highlightPreferenceKey == null) {
+                            highlightPreferenceKey = Pair(pos, highLightColor)
+                        } else {
+                            highlightPreferenceKey = null
                         }
+                        notifyItemChanged(pos)
                     }
                 }
                 time += delayTime

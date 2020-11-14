@@ -101,6 +101,8 @@ class SearchPreferenceViewModel(application: Application, private val preference
                             pref.dependency = null
                             // 階層Fragmentが指定されていればそれを、なければnull
                             pref.fragment = fragmentName
+                            // 検索結果を表示するPreferenceであることを表明
+                            pref.extras.putBoolean(SearchPreferenceChildFragment.PREFERENCE_SEARCH_RESULT_ITEM, true)
                             val data = SearchPreferenceParseData(
                                 preference = pref,
                                 resId = xmlResId,

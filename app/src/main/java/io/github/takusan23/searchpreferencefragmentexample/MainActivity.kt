@@ -1,5 +1,6 @@
 package io.github.takusan23.searchpreferencefragmentexample
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
@@ -39,6 +40,10 @@ class MainActivity : AppCompatActivity() {
             // FragmentのPreferenceを押したときに呼ばれる高階関数
             fragment.onPreferenceClickFunc = { preference ->
                 Toast.makeText(this, preference?.title, Toast.LENGTH_SHORT).show()
+                // ライセンス画面へ
+                if (preference!!.key == "setting_kono_app") {
+                    startActivity(Intent(this, LicenseActivity::class.java))
+                }
             }
 
             fragment.onChildPreferenceFragmentCompatClickFunc = { preference ->
