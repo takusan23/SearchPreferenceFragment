@@ -42,7 +42,7 @@ allprojects {
 }
 ```
 
-そしたら今度、`app`フォルダにある`build.gradle`を開き一行足します。1.2.0の部分は最新版を入れてください。
+そしたら今度、`app`フォルダにある`build.gradle`を開き一行足します。1.3.0の部分は最新版を入れてください。
 
 ```gradle
 dependencies {
@@ -109,7 +109,6 @@ val bundle = Bundle().apply {
 ```
 
 ## 検索に乗せるPreferenceを集める
-(階層が一個の場合は飛ばしていいです)
 
 (作るのに大変だったところ)このライブラリでは、複数のPreferenceCompatFragmentが有っても登録できれば検索結果に表示できるようになります。さらに既存の`PrefrenceCompatFragment`をそのまま使えます。  
 なお、**最初に表示するPreferenceのリソースIDを指定**の項目で指定したリソースIDは書かなくていいです。
@@ -140,6 +139,19 @@ val bundle = Bundle().apply {
     android:summary="Fragmentが切り替わります"
     android:title="Android コードネーム" />
 ```
+
+### 階層が一つだけの場合
+空のHashmapを渡せばいいです。  
+空っぽの場合は**最初に表示するPreferenceのリソースIDを指定**で指定したPreferenceのみが検索対象になります。
+
+```kotlin
+val bundle = Bundle().apply {
+    // 空っぽのHashmapを渡す。
+    val map = hashMapOf<String,Int>()
+    putSerializable(SearchPreferenceFragment.PREFERENCE_XML_FRAGMENT_NAME_HASH_MAP, map)
+}
+```
+
 
 > それと本家では`onPreferenceStartFragment()`を実装してくれと書いてますが、このライブラリでは実装しても使わないので実装しなくていいです。
 
