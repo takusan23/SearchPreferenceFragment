@@ -15,7 +15,7 @@ import org.xmlpull.v1.XmlPullParser
  * 検索PreferenceFragmentで利用するViewModel
  * @param preferenceXmlResId 検索で見つけてもらうPreferenceXML。サイトマップ的な役割を果たす
  * */
-class SearchPreferenceViewModel(application: Application, private val preferenceXmlResId: Int, private val preferenceFragmentMap: HashMap<String?, Int>) : AndroidViewModel(application) {
+open class SearchPreferenceViewModel(application: Application, private val preferenceXmlResId: Int, private val preferenceFragmentMap: HashMap<String?, Int>) : AndroidViewModel(application) {
 
     /** Context */
     private val context = getApplication<Application>().applicationContext

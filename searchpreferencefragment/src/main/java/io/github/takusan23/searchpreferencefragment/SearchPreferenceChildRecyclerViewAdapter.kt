@@ -10,7 +10,7 @@ import androidx.preference.PreferenceViewHolder
  * なんか、[PreferenceGroupAdapter]を継承しようとすると赤くなるので、アノテーションがついてる
  * */
 @SuppressLint("RestrictedApi")
-class SearchPreferenceChildRecyclerViewAdapter(preferenceGroup: PreferenceGroup) : PreferenceGroupAdapter(preferenceGroup) {
+open class SearchPreferenceChildRecyclerViewAdapter(preferenceGroup: PreferenceGroup) : PreferenceGroupAdapter(preferenceGroup) {
 
     /**
      * Preferenceに色を付ける際は、このPairに値を入れてください。nullにすることで戻せます

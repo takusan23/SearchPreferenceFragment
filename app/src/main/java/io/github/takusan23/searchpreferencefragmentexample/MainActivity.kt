@@ -1,23 +1,23 @@
 package io.github.takusan23.searchpreferencefragmentexample
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
-import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
-import com.google.android.material.snackbar.Snackbar
+import androidx.appcompat.app.AppCompatActivity
 import io.github.takusan23.searchpreferencefragment.SearchPreferenceChildFragment
 import io.github.takusan23.searchpreferencefragment.SearchPreferenceFragment
-import kotlinx.android.synthetic.main.activity_main.*
+import io.github.takusan23.searchpreferencefragmentexample.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+
+    private val viewBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(viewBinding.root)
 
         // オリジナル版と継承して作ったバージョンを切り替えるなど
-        activity_main_bottom_navigation_bar.setOnNavigationItemSelectedListener {
+        viewBinding.activityMainBottomNavigationBar.setOnNavigationItemSelectedListener {
             val fragment = when (it.itemId) {
                 R.id.activity_main_menu_default -> {
                     SearchPreferenceFragment()
@@ -50,10 +50,15 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, preference?.title, Toast.LENGTH_SHORT).show()
             }
 
+            // Preference取得
+            fragment.preferenceListCallBack = { list ->
+                list.forEach { println(it) }
+            }
+
             supportFragmentManager.beginTransaction().replace(R.id.activity_main_fragment_host_frame_layout, fragment).commit()
             true
         }
-        activity_main_bottom_navigation_bar.selectedItemId = R.id.activity_main_menu_default
+        viewBinding.activityMainBottomNavigationBar.selectedItemId = R.id.activity_main_menu_default
     }
 
 }

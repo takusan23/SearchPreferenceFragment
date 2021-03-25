@@ -20,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 /**
  * [SearchPreferenceFragment]に置くFragment。設定項目一覧はこのFragmentで表示している
  * */
-class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
+open class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
 
     /** 最初に表示されるPreferenceのID */
     private val defaultPreferenceResId by lazy { arguments?.getInt(PREFERENCE_XML_RESOURCE_ID) }
@@ -115,13 +115,16 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                                     val fragmentPath = preference.fragment
                                     if (fragmentPath == null) {
                                         // Fragment未設定時のみ
-                                        clickFunc(preference)
+                                        clickFunc.invoke(preference)
                                     }
                                     true
                                 }
                             }
                         }
                         preferenceFragmentFix(fragment)
+
+                        // Preferenceをコールバックで返す
+                        searchPreferenceFragment.preferenceListCallBack?.invoke(getAllPreference(preferenceScreen))
                     }
                 }
             })
@@ -218,6 +221,9 @@ class SearchPreferenceChildFragment : PreferenceFragmentCompat() {
                 scroll(preferenceList, listView, result.preference.key, result.preferenceTitle)
             }
         }
+
+        // Preferenceをコールバックで返す
+        searchPreferenceFragment.preferenceListCallBack?.invoke(preferenceList)
 
     }
 

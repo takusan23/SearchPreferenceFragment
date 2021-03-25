@@ -17,7 +17,7 @@
     - その際はFragmentを切り替えて案内します
     - 階層の方はPreferenceCompatFragmentがそのまま使えます。
 - Kotlin
-    - [高階関数など](#高階関数)
+    - [関数など](#関数)
 - スクロール+ハイライト機能
     - [デフォルトでは黄色。変更可能（後述）](#ハイライトの色とか回数とか間隔とか)
     - 複数のPreferenceCompatFragmentのときも動作
@@ -356,7 +356,7 @@ class OriginalSearchPreferenceFragment : SearchPreferenceFragment() {
 
 なお、検索する際は`search()`関数を利用することで検索ができます。引数に検索ワードを入れてね
 
-# 高階関数
+# 関数
 - onPreferenceClickFunc
     - 最初に表示しているPreferenceを押したときに呼ばれる高階関数
 - onChildPreferenceFragmentCompatClickFunc

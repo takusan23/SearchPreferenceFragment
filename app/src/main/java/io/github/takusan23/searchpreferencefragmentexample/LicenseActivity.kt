@@ -2,13 +2,16 @@ package io.github.takusan23.searchpreferencefragmentexample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import kotlinx.android.synthetic.main.activity_license.*
+import io.github.takusan23.searchpreferencefragmentexample.databinding.ActivityLicenseBinding
 
 class LicenseActivity : AppCompatActivity() {
+
+    private val viewBinding by lazy { ActivityLicenseBinding.inflate(layoutInflater) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_license)
-        license_activity_textView.text = """
+        setContentView(viewBinding.root)
+        viewBinding.licenseActivityTextView.text = """
 --- takusan23/SearchPreferenceFragment ---
             
  Copyright 2020 takusan_23

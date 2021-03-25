@@ -6,16 +6,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.SearchView
 import androidx.activity.addCallback
-import androidx.core.view.children
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
-import kotlinx.android.synthetic.main.fragment_search_preference_fragment.*
+import io.github.takusan23.searchpreferencefragment.databinding.FragmentSearchPreferenceFragmentBinding
 
 /**
  * 検索可能PreferenceFragment。このFragmentに[androidx.preference.PreferenceFragmentCompat]を置く
@@ -73,6 +69,9 @@ open class SearchPreferenceFragment : Fragment() {
         const val CHILD_SEARCH_PREFRENCE_BACK_STACK_TAG = "child_search_fragment_first"
     }
 
+    /** ViewBinding */
+    private val viewBinding by lazy { FragmentSearchPreferenceFragmentBinding.inflate(layoutInflater) }
+
     /** 検索の中身などを保持するViewModel */
     private lateinit var viewModel: SearchPreferenceViewModel
 
@@ -108,15 +107,20 @@ open class SearchPreferenceFragment : Fragment() {
      * */
     var onPreferenceFragmentChangeEventFunc: (() -> Unit)? = null
 
+    /**
+     * 表示しているPreferenceを返すコールバック
+     * */
+    var preferenceListCallBack: ((List<Preference>) -> Unit)? = null
+
     /** レイアウト指定 */
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_search_preference_fragment, container, false)
+        return viewBinding.root
     }
 
     /** メイン処理 */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        init(savedInstanceState, search_fragment_input, search_fragment_host_frame_layout)
+        init(savedInstanceState, viewBinding.searchFragmentInput, viewBinding.searchFragmentHostFrameLayout)
     }
 
     /**
